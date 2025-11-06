@@ -1,9 +1,7 @@
-// A single-file demo Flutter app (main.dart) implementing the requested UI and features.
-// Packages used (add to pubspec.yaml):
-//   flutter_riverpod: ^2.3.6
-//   flutter_screenutil: ^5.7.0
-//   google_fonts: ^5.0.0
-// No assets required — uses network images for demo.
+// main.dart
+// Light-mode pharmacy style product app (single file).
+// Packages required:
+//  flutter_riverpod, flutter_screenutil, google_fonts
 
 import 'dart:async';
 
@@ -38,7 +36,7 @@ class Comment {
     : createdAt = createdAt ?? DateTime.now();
 }
 
-// ---------- Dummy Data ----------
+// ---------- Dummy Data (Medicine) ----------
 final List<Product> dummyProducts = [
   Product(
     id: 1,
@@ -57,7 +55,7 @@ final List<Product> dummyProducts = [
   Product(
     id: 3,
     title: 'Ibuprofen 200mg',
-    description: 'Relieves inflammation and pain.',
+    description: 'Relieves inflammation and moderate pain.',
     image: 'https://picsum.photos/seed/med3/600/600',
     category: 'Pain Relief',
   ),
@@ -90,22 +88,16 @@ final List<String> dummyBanners = [
   'https://picsum.photos/seed/medbanner3/900/400',
 ];
 
-// ---------- State Management (Riverpod) ----------
-// Products provider (simple read-only list for this demo)
+// ---------- Riverpod providers ----------
 final productsProvider = Provider<List<Product>>((ref) => dummyProducts);
-
-// Search filter provider
 final searchQueryProvider = StateProvider<String>((ref) => '');
-
-// Category filter provider
 final categoryFilterProvider = StateProvider<String?>((ref) => null);
 
-// Comments StateNotifier: in-memory storage mapping productId -> List<Comment>
 class CommentsNotifier extends StateNotifier<Map<int, List<Comment>>> {
   CommentsNotifier() : super({});
 
   List<Comment> commentsFor(int productId) =>
-      (state[productId] ?? []).reversed.toList(); // latest first
+      (state[productId] ?? []).reversed.toList();
 
   void addComment(int productId, String text) {
     final list = List<Comment>.from(state[productId] ?? []);
@@ -129,21 +121,68 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static const Color primaryBlue = Color(0xFF2F80ED);
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(390, 844),
       minTextAdapt: true,
       builder: (context, child) {
+        final base = ThemeData.light();
+        final theme = base.copyWith(
+          primaryColor: primaryBlue,
+          colorScheme: base.colorScheme.copyWith(primary: primaryBlue),
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            elevation: 0.5,
+            iconTheme: IconThemeData(color: Colors.black87),
+            titleTextStyle: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
+            centerTitle: false,
+          ),
+          textTheme: GoogleFonts.poppinsTextTheme(
+            base.textTheme,
+          ).apply(bodyColor: Colors.black87),
+          cardTheme: CardThemeData(
+            color: Colors.white,
+            elevation: 6,
+            shadowColor: Colors.black12,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.grey[100],
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 12.h,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        );
+
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Neon Bazaar',
-          theme: ThemeData(
-            scaffoldBackgroundColor: Colors.black,
-            textTheme: GoogleFonts.poppinsTextTheme(
-              Theme.of(context).textTheme,
-            ).apply(bodyColor: Colors.white),
-          ),
+          title: 'Pharma Shop',
+          theme: theme,
           home: const LandingPage(),
         );
       },
@@ -171,7 +210,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
         final next = (_bannerController.page ?? 0) + 1;
         _bannerController.animateToPage(
           next.toInt() % dummyBanners.length,
-          duration: const Duration(milliseconds: 700),
+          duration: const Duration(milliseconds: 600),
           curve: Curves.easeInOut,
         );
       }
@@ -200,143 +239,55 @@ class _LandingPageState extends ConsumerState<LandingPage> {
     }).toList();
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Pharma Shop',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () => ref.read(commentsProvider.notifier).clearAll(),
+            icon: const Icon(Icons.delete_outline),
+            color: Colors.black54,
+            tooltip: 'Clear comments (dev)',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 12.h),
-              // Top bar (logo + actions)
-              Row(
-                children: [
-                  _NeonLogo(),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () =>
-                        ref.read(commentsProvider.notifier).clearAll(),
-                    icon: const Icon(Icons.clear_all),
-                    color: Colors.white70,
-                    tooltip: 'Clear all comments (dev)',
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-
-              // Banner
+              // Banner slider
               SizedBox(
-                height: 160.h,
-                child: Stack(
-                  children: [
-                    PageView.builder(
-                      controller: _bannerController,
-                      itemCount: dummyBanners.length,
-                      itemBuilder: (context, index) {
-                        final url = dummyBanners[index];
-                        return Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 6.w,
-                            vertical: 8.h,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(18.r),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Image.network(url, fit: BoxFit.cover),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        Colors.black.withOpacity(0.45),
-                                      ],
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 16.w,
-                                  bottom: 14.h,
-                                  child: Text(
-                                    'Hot Picks',
-                                    style: TextStyle(
-                                      fontSize: 18.sp,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    // indicator
-                    Positioned(
-                      right: 12.w,
-                      bottom: 12.h,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black45,
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Row(
-                          children: List.generate(
-                            dummyBanners.length,
-                            (i) => AnimatedBuilder(
-                              animation: _bannerController,
-                              builder: (context, child) {
-                                final page = (_bannerController.hasClients
-                                    ? (_bannerController.page ??
-                                          _bannerController.initialPage)
-                                    : 0);
-                                final active = page.round() == i;
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 4.w,
-                                  ),
-                                  child: Container(
-                                    width: active ? 20.w : 8.w,
-                                    height: 6.h,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(6.r),
-                                      gradient: active
-                                          ? const LinearGradient(
-                                              colors: [
-                                                Color(0xFF00F5A0),
-                                                Color(0xFF00B4FF),
-                                              ],
-                                            )
-                                          : null,
-                                      color: active ? null : Colors.white24,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
+                height: 150.h,
+                child: PageView.builder(
+                  controller: _bannerController,
+                  itemCount: dummyBanners.length,
+                  itemBuilder: (context, index) {
+                    final url = dummyBanners[index];
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14.r),
+                        child: Image.network(url, fit: BoxFit.cover),
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
 
-              SizedBox(height: 12.h),
+              SizedBox(height: 14.h),
 
               // Search bar
-              _NeonSearchBar(),
+              _SearchRow(),
+
               SizedBox(height: 12.h),
 
               // Category chips
               SizedBox(
-                height: 36.h,
+                height: 40.h,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
@@ -365,7 +316,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
 
               SizedBox(height: 12.h),
 
-              // Product grid
+              // Product grid (2 columns)
               Expanded(
                 child: GridView.builder(
                   padding: EdgeInsets.only(bottom: 20.h),
@@ -391,96 +342,30 @@ class _LandingPageState extends ConsumerState<LandingPage> {
 }
 
 // ---------- Widgets ----------
-class _NeonLogo extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 44.w,
-          height: 44.w,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00F5A0), Color(0xFF00B4FF)],
-            ),
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blue.withOpacity(0.25),
-                blurRadius: 12.r,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.storefront_outlined,
-            color: Colors.black87,
-            size: 26.w,
-          ),
-        ),
-        SizedBox(width: 10.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Neon',
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
-            ),
-            Text(
-              'Bazaar',
-              style: TextStyle(fontSize: 12.sp, color: Colors.white70),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _NeonSearchBar extends ConsumerWidget {
+class _SearchRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController(
       text: ref.read(searchQueryProvider),
     );
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14.r),
-        gradient: LinearGradient(
-          colors: [
-            Colors.white.withOpacity(0.04),
-            Colors.white.withOpacity(0.02),
-          ],
-        ),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: Colors.white70),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: (v) =>
-                  ref.read(searchQueryProvider.notifier).state = v,
-              style: TextStyle(color: Colors.white, fontSize: 14.sp),
-              decoration: InputDecoration(
-                hintText: 'Search products...',
-                hintStyle: TextStyle(color: Colors.white38),
-                border: InputBorder.none,
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller,
+            onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
+            decoration: InputDecoration(
+              hintText: 'Search medicine, e.g., Paracetamol',
+              prefixIcon: const Icon(Icons.search),
             ),
           ),
-          GestureDetector(
-            onTap: () {
-              controller.clear();
-              ref.read(searchQueryProvider.notifier).state = '';
-            },
-            child: Icon(Icons.close, color: Colors.white24),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(width: 12.w),
+        ElevatedButton(
+          onPressed: () => ref.read(searchQueryProvider.notifier).state = '',
+          child: const Text('Reset'),
+        ),
+      ],
     );
   }
 }
@@ -498,23 +383,28 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color selectedColor = Theme.of(context).primaryColor;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
         decoration: BoxDecoration(
+          color: isSelected ? selectedColor : Colors.grey[100],
           borderRadius: BorderRadius.circular(20.r),
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFF00F5A0), Color(0xFF00B4FF)],
-                )
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: selectedColor.withOpacity(0.14),
+                    blurRadius: 8,
+                  ),
+                ]
               : null,
-          color: isSelected ? null : Colors.white10,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white,
+            color: isSelected ? Colors.white : Colors.black87,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -530,22 +420,14 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => ProductDetailsPage(product: product)),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14.r),
-          gradient: LinearGradient(
-            colors: [
-              Colors.white.withOpacity(0.03),
-              Colors.white.withOpacity(0.02),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          border: Border.all(color: Colors.white10),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,7 +435,7 @@ class _ProductCard extends StatelessWidget {
             Hero(
               tag: 'product_image_${product.id}',
               child: ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(14.r)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
                 child: Image.network(
                   product.image,
                   height: 140.h,
@@ -569,15 +451,16 @@ class _ProductCard extends StatelessWidget {
                 children: [
                   Text(
                     product.title,
-                    style: TextStyle(
-                      fontSize: 14.sp,
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(height: 6.h),
                   Text(
                     product.category,
-                    style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                    ),
                   ),
                 ],
               ),
@@ -589,7 +472,7 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-// ---------- Product Details Page ----------
+// ---------- Product Details ----------
 class ProductDetailsPage extends ConsumerStatefulWidget {
   final Product product;
   const ProductDetailsPage({required this.product, super.key});
@@ -609,7 +492,7 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
     _commentController = TextEditingController();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
     )..forward();
   }
 
@@ -624,62 +507,43 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
   Widget build(BuildContext context) {
     final commentsMap = ref.watch(commentsProvider);
     final comments = commentsMap[widget.product.id]?.reversed.toList() ?? [];
+    final theme = Theme.of(context);
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.black87),
+        elevation: 0.5,
       ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                Hero(
-                  tag: 'product_image_${widget.product.id}',
-                  child: Image.network(
-                    widget.product.image,
-                    height: 340.h,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Container(
-                  height: 340.h,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.6),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 18.w,
-                  bottom: 18.h,
-                  child: Text(
-                    widget.product.title,
-                    style: TextStyle(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
+            Hero(
+              tag: 'product_image_${widget.product.id}',
+              child: Image.network(
+                widget.product.image,
+                height: 300.h,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 12.h),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    widget.product.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20.sp,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
                   Row(
                     children: [
                       Container(
@@ -688,12 +552,12 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
                           vertical: 6.h,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(12.r),
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Text(
                           widget.product.category,
-                          style: TextStyle(fontSize: 12.sp),
+                          style: theme.textTheme.bodySmall,
                         ),
                       ),
                       const Spacer(),
@@ -705,30 +569,27 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
                       ),
                     ],
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 14.h),
                   Text(
                     'Product Details',
-                    style: TextStyle(
-                      fontSize: 16.sp,
+                    style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
                     widget.product.description,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.white70,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.black87,
                       height: 1.4,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 18.h),
 
-                  // Comments area
+                  // Comments header
                   Text(
                     'Comments',
-                    style: TextStyle(
-                      fontSize: 16.sp,
+                    style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -738,77 +599,53 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
                   Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            color: Colors.white10,
-                          ),
-                          child: TextField(
-                            controller: _commentController,
-                            style: TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: 'Write a comment...',
-                              hintStyle: TextStyle(color: Colors.white38),
-                              border: InputBorder.none,
-                            ),
+                        child: TextField(
+                          controller: _commentController,
+                          decoration: const InputDecoration(
+                            hintText: 'Write a comment...',
                           ),
                         ),
                       ),
-                      SizedBox(width: 8.w),
-                      GestureDetector(
-                        onTap: () {
+                      SizedBox(width: 10.w),
+                      ElevatedButton(
+                        onPressed: () {
                           final text = _commentController.text.trim();
                           if (text.isNotEmpty) {
                             ref
                                 .read(commentsProvider.notifier)
                                 .addComment(widget.product.id, text);
                             _commentController.clear();
-                            // subtle feedback
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Comment added')),
                             );
                           }
                         },
-                        child: Container(
-                          padding: EdgeInsets.all(12.w),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF00F5A0), Color(0xFF00B4FF)],
-                            ),
-                          ),
-                          child: Icon(Icons.send, color: Colors.black87),
-                        ),
+                        child: const Icon(Icons.send),
                       ),
                     ],
                   ),
 
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 14.h),
 
                   // Comments list
                   AnimatedBuilder(
                     animation: _fadeController,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _fadeController.value,
-                        child: child,
-                      );
-                    },
+                    builder: (context, child) =>
+                        Opacity(opacity: _fadeController.value, child: child),
                     child: Column(
                       children: comments.isEmpty
                           ? [
-                              SizedBox(height: 40.h),
+                              SizedBox(height: 30.h),
                               Row(
                                 children: [
                                   Icon(
                                     Icons.comment_bank_outlined,
-                                    color: Colors.white24,
+                                    color: Colors.black26,
                                   ),
                                   SizedBox(width: 8.w),
                                   Text(
                                     'No comments yet — be the first!',
-                                    style: TextStyle(color: Colors.white54),
+                                    style: TextStyle(color: Colors.black45),
                                   ),
                                 ],
                               ),
@@ -819,7 +656,7 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
                     ),
                   ),
 
-                  SizedBox(height: 40.h),
+                  SizedBox(height: 30.h),
                 ],
               ),
             ),
@@ -837,30 +674,22 @@ class _CommentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
+      padding: EdgeInsets.symmetric(vertical: 10.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42.w,
-            height: 42.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF00F5A0), Color(0xFF00B4FF)],
-              ),
-            ),
-            child: Center(
-              child: Text(
-                comment.createdAt.hour.toString().padLeft(2, '0'),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+          CircleAvatar(
+            radius: 20.r,
+            backgroundColor: Colors.blue[50],
+            child: Text(
+              comment.createdAt.hour.toString().padLeft(2, '0'),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
               ),
             ),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,12 +703,12 @@ class _CommentTile extends StatelessWidget {
                     SizedBox(width: 8.w),
                     Text(
                       '• ${_formatTimeAgo(comment.createdAt)}',
-                      style: TextStyle(color: Colors.white54, fontSize: 12.sp),
+                      style: TextStyle(color: Colors.black45, fontSize: 12.sp),
                     ),
                   ],
                 ),
                 SizedBox(height: 6.h),
-                Text(comment.text, style: TextStyle(color: Colors.white70)),
+                Text(comment.text, style: TextStyle(color: Colors.black87)),
               ],
             ),
           ),
@@ -896,5 +725,3 @@ String _formatTimeAgo(DateTime dt) {
   if (diff.inHours < 24) return '${diff.inHours}h ago';
   return '${diff.inDays}d ago';
 }
-
-// ---------- End of file ----------
