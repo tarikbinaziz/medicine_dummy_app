@@ -18,6 +18,8 @@ class Product {
   final String description;
   final String image;
   final String category;
+  final double price;
+  final double discountPrice;
 
   Product({
     required this.id,
@@ -25,6 +27,8 @@ class Product {
     required this.description,
     required this.image,
     required this.category,
+    this.price = 0.0,
+    this.discountPrice = 0.0,
   });
 }
 
@@ -44,6 +48,8 @@ final List<Product> dummyProducts = [
     description: 'Effective for reducing fever and mild pain.',
     image: 'assets/png/istockphoto-156292188-612x612.jpg',
     category: 'Pain Relief',
+    price: 5.99,
+    discountPrice: 4.99,
   ),
   Product(
     id: 2,
@@ -51,6 +57,8 @@ final List<Product> dummyProducts = [
     description: 'Boosts immunity and overall health.',
     image: 'assets/png/premium_photo-1668487826871-2f2cac23ad56.jpeg',
     category: 'Vitamins',
+    price: 7.99,
+    discountPrice: 6.99,
   ),
   Product(
     id: 3,
@@ -58,6 +66,8 @@ final List<Product> dummyProducts = [
     description: 'Relieves inflammation and moderate pain.',
     image: 'assets/png/SCR-20251106-pjxu.png',
     category: 'Pain Relief',
+    price: 9.99,
+    discountPrice: 8.99,
   ),
   Product(
     id: 4,
@@ -65,6 +75,8 @@ final List<Product> dummyProducts = [
     description: 'Supports overall well-being and energy.',
     image: 'assets/png/SCR-20251106-pkba.png',
     category: 'Vitamins',
+    price: 12.99,
+    discountPrice: 10.99,
   ),
   Product(
     id: 5,
@@ -72,6 +84,8 @@ final List<Product> dummyProducts = [
     description: 'Helps in healing minor cuts and burns.',
     image: 'assets/png/SCR-20251106-pksj.png',
     category: 'First Aid',
+    price: 14.99,
+    discountPrice: 12.99,
   ),
   Product(
     id: 6,
@@ -79,6 +93,8 @@ final List<Product> dummyProducts = [
     description: 'Strengthens bones and teeth.',
     image: 'assets/png/SCR-20251106-pkua.png',
     category: 'Supplements',
+    price: 11.99,
+    discountPrice: 9.99,
   ),
 ];
 
@@ -241,18 +257,29 @@ class _LandingPageState extends ConsumerState<LandingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Pharma Shop',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pharma Shop',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              'Developed by Tarik Bin Aziz, 01641586586',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () => ref.read(commentsProvider.notifier).clearAll(),
-            icon: const Icon(Icons.delete_outline),
-            color: Colors.black54,
-            tooltip: 'Clear comments (dev)',
-          ),
-        ],
+
+        actions: [],
       ),
       body: SafeArea(
         child: Padding(
@@ -463,6 +490,28 @@ class _ProductCard extends StatelessWidget {
                       color: Colors.black54,
                     ),
                   ),
+                  SizedBox(height: 8.h),
+
+                  /// ✅ Price Row
+                  Row(
+                    children: [
+                      Text(
+                        "৳${product.price}",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade700,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        "৳${product.discountPrice}",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.black45,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -570,6 +619,52 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
                       ),
                     ],
                   ),
+                  SizedBox(height: 14.h),
+
+                  // Add this just below product title (inside Padding widget)
+                  Row(
+                    children: [
+                      Text(
+                        "৳${widget.product.price}",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 19.sp,
+                          color: const Color(0xFF2F80ED), // main accent color
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Text(
+                        "৳${widget.product.discountPrice}",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.black38,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+
+                      // ✅ Discount badge
+                      if (widget.product.discountPrice > widget.product.price)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2F80ED).withOpacity(.12),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            "-${(((widget.product.discountPrice - widget.product.price) / widget.product.discountPrice) * 100).round()}%",
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF2F80ED),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 14.h),
+
                   SizedBox(height: 14.h),
                   Text(
                     'Product Details',
