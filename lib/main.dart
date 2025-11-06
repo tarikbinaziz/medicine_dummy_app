@@ -42,50 +42,51 @@ final List<Product> dummyProducts = [
     id: 1,
     title: 'Paracetamol 500mg',
     description: 'Effective for reducing fever and mild pain.',
-    image: 'https://picsum.photos/seed/med1/600/600',
+    image: 'assets/png/istockphoto-156292188-612x612.jpg',
     category: 'Pain Relief',
   ),
   Product(
     id: 2,
     title: 'Vitamin C 1000mg',
     description: 'Boosts immunity and overall health.',
-    image: 'https://picsum.photos/seed/med2/600/600',
+    image: 'assets/png/premium_photo-1668487826871-2f2cac23ad56.jpeg',
     category: 'Vitamins',
   ),
   Product(
     id: 3,
     title: 'Ibuprofen 200mg',
     description: 'Relieves inflammation and moderate pain.',
-    image: 'https://picsum.photos/seed/med3/600/600',
+    image: 'assets/png/SCR-20251106-pjxu.png',
     category: 'Pain Relief',
   ),
   Product(
     id: 4,
     title: 'Multivitamin Capsule',
     description: 'Supports overall well-being and energy.',
-    image: 'https://picsum.photos/seed/med4/600/600',
+    image: 'assets/png/SCR-20251106-pkba.png',
     category: 'Vitamins',
   ),
   Product(
     id: 5,
     title: 'First Aid Cream',
     description: 'Helps in healing minor cuts and burns.',
-    image: 'https://picsum.photos/seed/med5/600/600',
+    image: 'assets/png/SCR-20251106-pksj.png',
     category: 'First Aid',
   ),
   Product(
     id: 6,
     title: 'Calcium Tablets',
     description: 'Strengthens bones and teeth.',
-    image: 'https://picsum.photos/seed/med6/600/600',
+    image: 'assets/png/SCR-20251106-pkua.png',
     category: 'Supplements',
   ),
 ];
 
 final List<String> dummyBanners = [
-  'https://picsum.photos/seed/medbanner1/900/400',
-  'https://picsum.photos/seed/medbanner2/900/400',
-  'https://picsum.photos/seed/medbanner3/900/400',
+  "assets/png/SCR-20251106-pkua.png",
+  "assets/png/SCR-20251106-pjxu.png",
+  "assets/png/SCR-20251106-pkba.png",
+  "assets/png/SCR-20251106-pksj.png",
 ];
 
 // ---------- Riverpod providers ----------
@@ -271,7 +272,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
                       padding: EdgeInsets.symmetric(horizontal: 6.w),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14.r),
-                        child: Image.network(url, fit: BoxFit.cover),
+                        child: Image.asset(url, fit: BoxFit.cover),
                       ),
                     );
                   },
@@ -436,7 +437,7 @@ class _ProductCard extends StatelessWidget {
               tag: 'product_image_${product.id}',
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                child: Image.network(
+                child: Image.asset(
                   product.image,
                   height: 140.h,
                   width: double.infinity,
@@ -523,7 +524,7 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage>
           children: [
             Hero(
               tag: 'product_image_${widget.product.id}',
-              child: Image.network(
+              child: Image.asset(
                 widget.product.image,
                 height: 300.h,
                 width: double.infinity,
